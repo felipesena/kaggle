@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import Flatten
+from keras.optimizers import RMSprop
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
 from keras.utils import np_utils
@@ -15,10 +16,11 @@ K.set_image_dim_ordering('th')
 X_test = np.genfromtxt('test.csv', delimiter=',', skip_header=1)
 
 MODEL_JSON_FILE = 'model.json'
+EPOCHS = 30
 
 
 # define the larger model
-def larger_model(num_classes):
+def create_model(num_classes):
     # create model
     model = Sequential()
     model.add(Conv2D(30, (5, 5), input_shape=(1, 28, 28), activation='relu'))
@@ -31,8 +33,10 @@ def larger_model(num_classes):
     model.add(Dense(50, activation='relu'))
     model.add(Dense(num_classes, activation='softmax'))
 
+    optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+
     # compile model
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
     return model
 
 
@@ -63,31 +67,30 @@ def normalize(input):
     return input
 
 
-if os.path.isfile(MODEL_JSON_FILE):
-    model = load_model()
-else:
-    mnist_train = np.genfromtxt('train.csv', delimiter=',', skip_header=1)
-
-    y_train = mnist_train[:, 0]
-    X_train = mnist_train[:, 1:]
-
-    seed = 7
-    np.random.seed(seed)
-
-    X_train = normalize(X_train)
-
-    # one hot encode outputs
-    y_train = np_utils.to_categorical(y_train)
-
-    model = larger_model(y_train.shape[1])
-
-    # Fit the model
-    model.fit(X_train, y_train, epochs=10, batch_size=200)
-
-    save_model(model)
-
-
 if __name__ == '__main__':
+
+    if os.path.isfile(MODEL_JSON_FILE):
+        model = load_model()
+    else:
+        mnist_train = np.genfromtxt('train.csv', delimiter=',', skip_header=1)
+
+        y_train = mnist_train[:, 0]
+        X_train = mnist_train[:, 1:]
+
+        seed = 7
+        np.random.seed(seed)
+
+        X_train = normalize(X_train)
+
+        # one hot encode outputs
+        y_train = np_utils.to_categorical(y_train)
+
+        model = create_model(y_train.shape[1])
+
+        # Fit the model
+        model.fit(X_train, y_train, epochs=EPOCHS, batch_size=200)
+
+        save_model(model)
 
     X_test = normalize(X_test)
 
