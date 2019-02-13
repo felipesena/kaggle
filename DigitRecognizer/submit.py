@@ -13,8 +13,6 @@ from keras.utils import np_utils
 from keras import backend as K
 K.set_image_dim_ordering('th')
 
-X_test = np.genfromtxt('test.csv', delimiter=',', skip_header=1)
-
 MODEL_JSON_FILE = 'model.json'
 EPOCHS = 30
 
@@ -67,8 +65,7 @@ def normalize(input):
     return input
 
 
-if __name__ == '__main__':
-
+def get_model():
     if os.path.isfile(MODEL_JSON_FILE):
         model = load_model()
     else:
@@ -91,6 +88,15 @@ if __name__ == '__main__':
         model.fit(X_train, y_train, epochs=EPOCHS, batch_size=200)
 
         save_model(model)
+
+    return model
+
+
+if __name__ == '__main__':
+
+    X_test = np.genfromtxt('test.csv', delimiter=',', skip_header=1)
+
+    model = get_model()
 
     X_test = normalize(X_test)
 
